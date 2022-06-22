@@ -1,5 +1,5 @@
-# ygl
-Yet another Github Label Synchroniser.
+# yagls
+Yet Another Github Label Synchroniser.
 ## Inspiration
 I wanted to labeling well. But I'd no idea, so I found well-labeled project.
 
