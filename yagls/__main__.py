@@ -1,4 +1,4 @@
-from .ygl import *
+from .pygl import *
 import asyncio
 import argparse
 from os import path
@@ -6,7 +6,7 @@ from os import path
 
 def parse():
     parser = argparse.ArgumentParser(
-        prog="ygl", description="Yet another github label synchroniser"
+        prog="pygl", description="Yet another github label synchroniser"
     )
     parser.add_argument("FROM", help="Repository to be exported")
     parser.add_argument("TO", help="Repository to be imported")
