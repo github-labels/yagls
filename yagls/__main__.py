@@ -1,4 +1,4 @@
-from .pygl import *
+from .yagls import *
 import asyncio
 import argparse
 from os import path
