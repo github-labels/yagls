@@ -3,28 +3,45 @@ import asyncio
 import argparse
 from os import path
 
+
 def parse():
     parser = argparse.ArgumentParser(
         prog="ygl", description="Yet another github label synchroniser"
     )
     parser.add_argument("FROM", help="Repository to be exported")
     parser.add_argument("TO", help="Repository to be imported")
-    parser.add_argument("-o", "--overWrite", action='store_true', help="From repository is be cleared?")
-    parser.add_argument("-f", "--fromOwner", default=None, help="Explict owner of From repository")
-    parser.add_argument("-t", "--toOwner", default=None, help="Explict owner of To repository")
-    parser.add_argument("--token", default=None, help="Github personal access token that repo scope is allowed")
+    parser.add_argument(
+        "-o", "--overWrite", action="store_true", help="From repository is be cleared?"
+    )
+    parser.add_argument(
+        "-f", "--fromOwner", default=None, help="Explict owner of From repository"
+    )
+    parser.add_argument(
+        "-t", "--toOwner", default=None, help="Explict owner of To repository"
+    )
+    parser.add_argument(
+        "--token",
+        default=None,
+        help="Github personal access token that repo scope is allowed",
+    )
     parser.add_argument("--saveToken", action="store_true", help="Remember token")
     ns = parser.parse_args()
     return ns
+
+
 def tokenLoad():
     try:
-        with open(path.dirname(__file__)+'/token.txt', 'r') as fp:
+        with open(path.dirname(__file__) + "/token.txt", "r") as fp:
             return fp.read()
     except OSError:
         return None
+
+
 def tokenSave(token):
-    with open(path.dirname(__file__)+'/token.txt', 'w') as fp:
+    with open(path.dirname(__file__) + "/token.txt", "w") as fp:
         fp.write(token)
+
+
 async def main():
     ns = parse()
     token = tokenLoad()
@@ -62,5 +79,7 @@ async def main():
     except Exception:
         print(f"Failed to import to {repo[0]}/{repo[1]}.")
     await c.close()
-if __name__=='__main__':
+
+
+if __name__ == "__main__":
     asyncio.run(main())
