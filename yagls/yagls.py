@@ -32,11 +32,15 @@ class Connection:
     async def close(self):
         await self.connection.close()
 
-    async def getLabels(self, owner, repo):
+    async def getRawLabels(self, owner, repo):
         r = await self.connection.get(f"/repos/{owner}/{repo}/labels")
         if r.status == 404:
             raise ResourceNotFound()
         json = await r.json()
+        return json
+
+    async def getLabels(self, owner, repo):
+        json = await self.getRawLabels(owner, repo)
         for i in json:
             removeUnneededData(i)
         return json
@@ -62,11 +66,14 @@ class Connection:
     async def createLabels(self, owner, repo, labels):
         await asyncio.gather(*[self.createLabel(owner, repo, i) for i in labels])
 
-    async def getLabel(self, owner, repo, name):
+    async def getRawLabel(self, owner, repo, name):
         r = await self.connection.get(f"/repos/{owner}/{repo}/labels/{name}")
         if r.status == 404:
             raise ResourceNotFound()
-        json = await r.json()
+        return await r.json()
+
+    async def getLabel(self, owner, repo, name):
+        json = await self.getRawLabel(owner, repo, name)
         removeUnneededData(json)
         return json
 

@@ -1,4 +1,5 @@
 from .yagls import *
+from .generator import generateLabels
 import asyncio
 import argparse
 from pathlib import Path
@@ -8,19 +9,28 @@ def parse():
     parser = argparse.ArgumentParser(
         prog="yagls", description="Yet Another github label synchroniser"
     )
+    parser.add_argument("FROM", help="Repository to be exported")
     parser.add_argument(
-        "FROM", help="Repository to be exported"
+        "TO",
+        nargs="*",
+        help="Repositories to be imported. If TO is not provided, FROM will be TO repository.",
     )
-    parser.add_argument("TO", nargs='*', help="Repositories to be imported. If TO is not provided, FROM will be TO repository.")
     parser.add_argument(
         "-c", "--clear", action="store_true", help="From repository is be cleared?"
     )
     parser.add_argument(
+        "-t",
         "--token",
         default=None,
         help="Github personal access token that repo scope is allowed",
     )
-    parser.add_argument("--save", action="store_true", help="Remember token")
+    parser.add_argument("-s", "--save", action="store_true", help="Remember token")
+    parser.add_argument(
+        "-g", "--generator", action="store_true", help="Use embeded label generator"
+    )
+    parser.add_argument(
+        "-p", "--print", action="store_true", help="Print received datas"
+    )
     ns = parser.parse_args()
     return ns
 
@@ -48,9 +58,9 @@ def parseRepo(s):
     else:
         return tuple(t)
 
+
 def parseRepos(d):
     return (parseRepo(i) for i in d)
-
 
 
 async def main():
@@ -71,9 +81,8 @@ async def main():
     c = Connection(token)
     c.connect()
 
-    
     repo = parseRepo(ns.FROM)
-    if len(ns.TO)!=0:
+    if len(ns.TO) != 0:
         if repo[0] == None:
             try:
                 repo = await c.getBestRepo(repo[1])
@@ -88,10 +97,18 @@ async def main():
             print(f"Failed to get labels of {repo[0]}/{repo[1]}")
             await c.close()
             raise
+        if ns.print:
+            print(f"{repo[0]}/{repo[1]}: {labels}")
         repos = parseRepos(ns.TO)
     else:
         repos = [repo]
         labels = None
+
+    if ns.generator:
+        if labels:
+            labels += generateLabels()
+        else:
+            labels = generateLabels()
 
     for repo in repos:
         if repo[0] == None:
@@ -102,6 +119,13 @@ async def main():
                 await c.close()
                 raise
             print(f"Found: {repo[0]}/{repo[1]}")
+        if ns.print:
+            try:
+                _labels = await c.getLabels(*repo)
+            except Exception:
+                print(f"Failed to get labels of {repo[0]}/{repo[1]}")
+            else:
+                print(f"{repo[0]}/{repo[1]}: {_labels}")
         if ns.clear:
             try:
                 await c.deleteLabels(*repo)
