@@ -1,12 +1,12 @@
 from .yagls import *
 import asyncio
 import argparse
-from os import path
+from pathlib import Path
 
 
 def parse():
     parser = argparse.ArgumentParser(
-        prog="pygl", description="Yet another github label synchroniser"
+        prog="yagls", description="Yet Another github label synchroniser"
     )
     parser.add_argument("FROM", help="Repository to be exported")
     parser.add_argument("TO", help="Repository to be imported")
@@ -31,14 +31,17 @@ def parse():
 
 def tokenLoad():
     try:
-        with open(path.dirname(__file__) + "/token.txt", "r") as fp:
+        d = Path.home().joinpath(".yagls")
+        with open(d.joinpath("token.txt"), "r") as fp:
             return fp.read()
-    except OSError:
+    except Exception:
         return None
 
 
 def tokenSave(token):
-    with open(path.dirname(__file__) + "/token.txt", "w") as fp:
+    d = Path.home().joinpath(".yagls")
+    d.mkdir(exist_ok=True)
+    with open(d.joinpath("token.txt"), "w") as fp:
         fp.write(token)
 
 
@@ -51,7 +54,11 @@ async def main():
     if ns.token:
         token = ns.token
     if ns.saveToken:
-        tokenSave(token)
+        try:
+            tokenSave(token)
+        except Exception as e:
+            print(e)
+            print("Failed to save token!")
 
     c = Connection(token)
     c.connect()
@@ -78,6 +85,8 @@ async def main():
         await c.createLabels(*repo, labels)
     except Exception:
         print(f"Failed to import to {repo[0]}/{repo[1]}.")
+        await c.close()
+        exit(-1)
     await c.close()
 
 
