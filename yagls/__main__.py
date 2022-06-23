@@ -14,17 +14,11 @@ def parse():
         "-o", "--overWrite", action="store_true", help="From repository is be cleared?"
     )
     parser.add_argument(
-        "-f", "--fromOwner", default=None, help="Explict owner of From repository"
-    )
-    parser.add_argument(
-        "-t", "--toOwner", default=None, help="Explict owner of To repository"
-    )
-    parser.add_argument(
         "--token",
         default=None,
         help="Github personal access token that repo scope is allowed",
     )
-    parser.add_argument("--saveToken", action="store_true", help="Remember token")
+    parser.add_argument("--save", action="store_true", help="Remember token")
     ns = parser.parse_args()
     return ns
 
@@ -45,6 +39,14 @@ def tokenSave(token):
         fp.write(token)
 
 
+def parseRepo(s):
+    t = s.split("/")
+    if len(t) == 1:
+        return (None, t[0])
+    else:
+        return tuple(t)
+
+
 async def main():
     ns = parse()
     token = tokenLoad()
@@ -53,7 +55,7 @@ async def main():
         exit(-1)
     if ns.token:
         token = ns.token
-    if ns.saveToken:
+    if ns.save:
         try:
             tokenSave(token)
         except Exception as e:
@@ -62,32 +64,52 @@ async def main():
 
     c = Connection(token)
     c.connect()
-    try:
-        if ns.fromOwner:
-            repo = (ns.fromOwner, ns.FROM)
-            labels = await c.getLabels(*repo)
-        else:
-            repo = await c.getBestRepo(ns.FROM)
-            print(f"Found: {repo[0]}/{repo[1]}")
-            labels = await c.getLabels(*repo)
-    except Exception:
-        print(f"Failed to get labels of {repo[0]}/{repo[1]}")
-        await c.close()
-        exit(-1)
-    if ns.toOwner:
-        repo = (ns.toOwner, ns.TO)
-    else:
-        repo = await c.getBestRepo(ns.TO)
+    repo = parseRepo(ns.FROM)
+    if repo[0] == None:
+        try:
+            repo = await c.getBestRepo(repo[1])
+        except Exception as e:
+            print(f"Failed to get repository through name {repo[1]}.")
+            await c.close()
+            raise
         print(f"Found: {repo[0]}/{repo[1]}")
     try:
-        if ns.overWrite:
-            await c.deleteLabels(*repo)
-        await c.createLabels(*repo, labels)
-    except Exception:
-        print(f"Failed to import to {repo[0]}/{repo[1]}.")
+        labels = await c.getLabels(*repo)
+    except Exception as e:
+        print(f"Failed to get labels of {repo[0]}/{repo[1]}")
         await c.close()
-        exit(-1)
+        raise
+    repo = parseRepo(ns.TO)
+    if repo[0] == None:
+        try:
+            repo = await c.getBestRepo(repo[1])
+        except Exception as e:
+            print(f"Failed to get repository through name {repo[1]}.")
+            await c.close()
+            raise
+        print(f"Found: {repo[0]}/{repo[1]}")
+    if ns.overWrite:
+        try:
+            await c.deleteLabels(*repo)
+        except Exception as e:
+            print(f"Failed to delete labels of {repo[0]}/{repo[1]}.")
+            await c.close()
+            raise
+    already_exist_flag = False
+    try:
+        await c.createLabels(*repo, labels)
+    except ValidationFailed as e:
+        already_exist_flag = True
+    except Exception as e:
+        print(f"Failed to create labels at {repo[0]}/{repo[1]}.")
+        await c.close()
+        raise
+    if already_exist_flag:
+        print(
+            f"Failed some tries to create label.\nMaybe there's already a label with the same name."
+        )
     await c.close()
+    exit(0)
 
 
 if __name__ == "__main__":

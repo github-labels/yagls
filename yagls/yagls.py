@@ -14,6 +14,10 @@ class ServiceUnavailable(Exception):
     pass
 
 
+class UnvalidResponseCode(Exception):
+    pass
+
+
 class Connection:
     def __init__(self, token):
         self.token = token
@@ -41,15 +45,19 @@ class Connection:
         r = await self.connection.delete(f"/repos/{owner}/{repo}/labels/{name}")
         if r.status == 404:
             raise ResourceNotFound()
+
     async def deleteLabels(self, owner, repo):
         r = await self.getLabels(owner, repo)
-        await asyncio.gather(*[self.deleteLabel(owner, repo, i['name']) for i in r])
+        await asyncio.gather(*[self.deleteLabel(owner, repo, i["name"]) for i in r])
+
     async def createLabel(self, owner, repo, label):
         r = await self.connection.post(f"/repos/{owner}/{repo}/labels", json=label)
         if r.status == 404:
             raise ResourceNotFound()
         elif r.status == 422:
             raise ValidationFailed()
+        elif r.status != 201:
+            raise UnvalidResponseCode(r.status)
 
     async def createLabels(self, owner, repo, labels):
         await asyncio.gather(*[self.createLabel(owner, repo, i) for i in labels])
