@@ -8,10 +8,12 @@ def parse():
     parser = argparse.ArgumentParser(
         prog="yagls", description="Yet Another github label synchroniser"
     )
-    parser.add_argument("FROM", help="Repository to be exported")
-    parser.add_argument("TO", help="Repository to be imported")
     parser.add_argument(
-        "-o", "--overWrite", action="store_true", help="From repository is be cleared?"
+        "FROM", help="Repository to be exported"
+    )
+    parser.add_argument("TO", nargs='*', help="Repositories to be imported. If TO is not provided, FROM will be TO repository.")
+    parser.add_argument(
+        "-c", "--clear", action="store_true", help="From repository is be cleared?"
     )
     parser.add_argument(
         "--token",
@@ -46,6 +48,10 @@ def parseRepo(s):
     else:
         return tuple(t)
 
+def parseRepos(d):
+    return (parseRepo(i) for i in d)
+
+
 
 async def main():
     ns = parse()
@@ -64,50 +70,60 @@ async def main():
 
     c = Connection(token)
     c.connect()
+
+    
     repo = parseRepo(ns.FROM)
-    if repo[0] == None:
+    if len(ns.TO)!=0:
+        if repo[0] == None:
+            try:
+                repo = await c.getBestRepo(repo[1])
+            except Exception as e:
+                print(f"Failed to get repository through name {repo[1]}.")
+                await c.close()
+                raise
+            print(f"Found: {repo[0]}/{repo[1]}")
         try:
-            repo = await c.getBestRepo(repo[1])
+            labels = await c.getLabels(*repo)
         except Exception as e:
-            print(f"Failed to get repository through name {repo[1]}.")
+            print(f"Failed to get labels of {repo[0]}/{repo[1]}")
             await c.close()
             raise
-        print(f"Found: {repo[0]}/{repo[1]}")
-    try:
-        labels = await c.getLabels(*repo)
-    except Exception as e:
-        print(f"Failed to get labels of {repo[0]}/{repo[1]}")
-        await c.close()
-        raise
-    repo = parseRepo(ns.TO)
-    if repo[0] == None:
-        try:
-            repo = await c.getBestRepo(repo[1])
-        except Exception as e:
-            print(f"Failed to get repository through name {repo[1]}.")
-            await c.close()
-            raise
-        print(f"Found: {repo[0]}/{repo[1]}")
-    if ns.overWrite:
-        try:
-            await c.deleteLabels(*repo)
-        except Exception as e:
-            print(f"Failed to delete labels of {repo[0]}/{repo[1]}.")
-            await c.close()
-            raise
-    already_exist_flag = False
-    try:
-        await c.createLabels(*repo, labels)
-    except ValidationFailed as e:
-        already_exist_flag = True
-    except Exception as e:
-        print(f"Failed to create labels at {repo[0]}/{repo[1]}.")
-        await c.close()
-        raise
-    if already_exist_flag:
-        print(
-            f"Failed some tries to create label.\nMaybe there's already a label with the same name."
-        )
+        repos = parseRepos(ns.TO)
+    else:
+        repos = [repo]
+        labels = None
+
+    for repo in repos:
+        if repo[0] == None:
+            try:
+                repo = await c.getBestRepo(repo[1])
+            except Exception as e:
+                print(f"Failed to get repository through name {repo[1]}.")
+                await c.close()
+                raise
+            print(f"Found: {repo[0]}/{repo[1]}")
+        if ns.clear:
+            try:
+                await c.deleteLabels(*repo)
+            except Exception as e:
+                print(f"Failed to delete labels of {repo[0]}/{repo[1]}.")
+                await c.close()
+                raise
+        already_exist_flag = False
+
+        if labels:
+            try:
+                await c.createLabels(*repo, labels)
+            except ValidationFailed as e:
+                already_exist_flag = True
+            except Exception as e:
+                print(f"Failed to create labels at {repo[0]}/{repo[1]}.")
+                await c.close()
+                raise
+        if already_exist_flag:
+            print(
+                f"[{repo[0]}/{repo[1]}] Failed some tries to create label.\n[{repo[0]}/{repo[1]}] Maybe there's already a label with the same name."
+            )
     await c.close()
     exit(0)
 
