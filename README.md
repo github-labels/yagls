@@ -1,12 +1,13 @@
 # yagls
 Yet Another Github Label Synchroniser.
 ## Inspiration
-I wanted to labeling well. But I'd no idea, so I found well-labeled project.
+I wanted to be good at labeling at GitHub. Therefore, for reference, I searched for well-labeled repositories.
 
-Also I found another Github Label Synchroniser, but It wasn't fit to me.
+However, it was hard work to carry the labels of the repository on a single way. I looked up Github Label Synchroniser to find some efficient way, but I didn't like they.
 
-To me, that wasn't intuitive. That worked well, but I didn't like that.
+That's why I made the Yet Another Github Label Synchronizer.
 
-So I decided to make new Github Label Synchroniser.
 ## Feather
-Just copy labels from repository and paste to repository.
+* Copy and paste labels from the repository
+* Save token
+* Automatically navigate through repositories with only the name of the repository
