@@ -63,6 +63,12 @@ def parseRepos(d):
     return (parseRepo(i) for i in d)
 
 
+def repoPrompt(repos):
+    for i in enumerate(repos):
+        print(f"{i[0]}. {'/'.join(i[1])}")
+    return repos[int(input("Choose one: "))]
+
+
 async def main():
     ns = parse()
     token = tokenLoad()
@@ -85,12 +91,11 @@ async def main():
     if len(ns.TO) != 0:
         if repo[0] == None:
             try:
-                repo = await c.getBestRepo(repo[1])
+                repo = repoPrompt(await c.getBestRepos(repo[1]))
             except Exception as e:
                 print(f"Failed to get repository through name {repo[1]}.")
                 await c.close()
                 raise
-            print(f"Found: {repo[0]}/{repo[1]}")
         try:
             labels = await c.getLabels(*repo)
         except Exception as e:
@@ -113,12 +118,11 @@ async def main():
     for repo in repos:
         if repo[0] == None:
             try:
-                repo = await c.getBestRepo(repo[1])
+                repo = repoPrompt(await c.getBestRepos(repo[1]))
             except Exception as e:
                 print(f"Failed to get repository through name {repo[1]}.")
                 await c.close()
                 raise
-            print(f"Found: {repo[0]}/{repo[1]}")
         if ns.print:
             try:
                 _labels = await c.getLabels(*repo)

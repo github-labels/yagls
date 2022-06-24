@@ -81,11 +81,22 @@ class Connection:
         r = await self.connection.get(
             f"/search/repositories?q={repo} in:name&per_page=1"
         )
-        if r == 422:
+        if r.status == 422:
             raise ValidationFailed()
-        elif r == 503:
+        elif r.status == 503:
             raise ServiceUnavailable()
         return tuple((await r.json())["items"][0]["full_name"].split("/"))
+
+    async def getBestRepos(self, name, n=3):
+        r = await self.connection.get(
+            f"/search/repositories?q={name} in:name&per_page=3"
+        )
+        if r.status == 422:
+            raise ValidationFailed()
+        elif r.status == 503:
+            raise ServiceUnavailable()
+        l = (await r.json())["items"]
+        return tuple(tuple(l[i]["full_name"].split("/")) for i in range(len(l)))
 
 
 def removeUnneededData(json):

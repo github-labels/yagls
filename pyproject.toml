@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "yagls"
-version = "1.2.0"
+version = "1.3.0"
 description = "Yet Another Github Label Synchroniser"
 authors = ["preeded <86511859+preeded@users.noreply.github.com>"]
 maintainers = ["preeded <86511859+preeded@users.noreply.github.com>"]
