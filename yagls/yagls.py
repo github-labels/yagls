@@ -26,7 +26,7 @@ class Connection:
     def connect(self):
         self.connection = aiohttp.ClientSession(
             "https://api.github.com",
-            headers={"Authorization": "token " + self.token, "User-Agent": "ygl"},
+            headers={"Authorization": "token " + self.token, "User-Agent": "yagls"},
         )
 
     async def close(self):
