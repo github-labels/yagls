@@ -1,5 +1,6 @@
 # yagls
 Yet Another Github Label Synchroniser.
+
 ## Inspiration
 I wanted to be good at labeling at GitHub. Therefore, for reference, I searched for well-labeled repositories.
 
