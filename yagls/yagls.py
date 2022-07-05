@@ -21,9 +21,6 @@ class UnvalidResponseCode(Exception):
 class Connection:
     def __init__(self, token):
         self.token = token
-        self.connection = None
-
-    def connect(self):
         self.connection = aiohttp.ClientSession(
             "https://api.github.com",
             headers={"Authorization": "token " + self.token, "User-Agent": "yagls"},

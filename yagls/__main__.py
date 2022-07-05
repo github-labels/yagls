@@ -85,7 +85,6 @@ async def main():
             print("Failed to save token!")
 
     c = Connection(token)
-    c.connect()
 
     repo = parseRepo(ns.FROM)
     if len(ns.TO) != 0:
