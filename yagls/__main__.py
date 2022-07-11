@@ -3,11 +3,14 @@ from .generator import generateLabels
 import asyncio
 import argparse
 from pathlib import Path
+from os import remove
 
 
 def parse():
     parser = argparse.ArgumentParser(
-        prog="yagls", description="Yet Another github label synchroniser"
+        prog="yagls",
+        description="Yet Another github label synchroniser",
+        exit_on_error=False,
     )
     parser.add_argument("FROM", help="Repository to be exported")
     parser.add_argument(
@@ -31,6 +34,9 @@ def parse():
     parser.add_argument(
         "-p", "--print", action="store_true", help="Print received datas"
     )
+    parser.add_argument(
+        "-d", "--delete", action="store_true", help="Delete saved token"
+    )
     ns = parser.parse_args()
     return ns
 
@@ -49,6 +55,12 @@ def tokenSave(token):
     d.mkdir(exist_ok=True)
     with open(d.joinpath("token.txt"), "w") as fp:
         fp.write(token)
+
+
+def tokenDelete():
+    path = Path.home().joinpath(".yagls", "token.txt")
+    if path.exists():
+        remove(path)
 
 
 def parseRepo(s):
@@ -71,6 +83,8 @@ def repoPrompt(repos):
 
 async def main():
     ns = parse()
+    if ns.delete:
+        tokenDelete()
     token = tokenLoad()
     if not token and not ns.token:
         print("Token is not provided! Please use --token argument!")
