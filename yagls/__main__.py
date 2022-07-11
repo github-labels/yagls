@@ -1,5 +1,4 @@
 from .yagls import *
-from .generator import generateLabels
 import asyncio
 import argparse
 from pathlib import Path
@@ -10,7 +9,6 @@ def parse():
     parser = argparse.ArgumentParser(
         prog="yagls",
         description="Yet Another github label synchroniser",
-        exit_on_error=False,
     )
     parser.add_argument("FROM", help="Repository to be exported")
     parser.add_argument(
@@ -124,9 +122,9 @@ async def main():
 
     if ns.generator:
         if labels:
-            labels += generateLabels()
+            labels += await c.generateLabels()
         else:
-            labels = generateLabels()
+            labels = await c.generateLabels()
 
     for repo in repos:
         if repo[0] == None:

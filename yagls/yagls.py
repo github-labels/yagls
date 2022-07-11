@@ -1,5 +1,6 @@
 import asyncio
 import aiohttp
+from .generator import generateLabels
 
 
 class ResourceNotFound(Exception):
@@ -94,6 +95,9 @@ class Connection:
             raise ServiceUnavailable()
         l = (await r.json())["items"]
         return tuple(tuple(l[i]["full_name"].split("/")) for i in range(len(l)))
+
+    async def generateLabels(self):
+        return await generateLabels(self)
 
 
 def removeUnneededData(json):
