@@ -78,6 +78,9 @@ def repoPrompt(repos):
         print(f"{i[0]}. {'/'.join(i[1])}")
     return repos[int(input("Choose one: "))]
 
+def report(owner, repo, s):
+    print(f"[{owner}/{repo}]: {s}")
+
 
 async def main():
     ns = parse()
@@ -110,11 +113,11 @@ async def main():
         try:
             labels = await c.getLabels(*repo)
         except Exception as e:
-            print(f"Failed to get labels of {repo[0]}/{repo[1]}")
+            report(*repo, "Failed to get labels.")
             await c.close()
             raise
         if ns.print:
-            print(f"{repo[0]}/{repo[1]}: {labels}")
+            report(*repo, f"{labels}")
         repos = parseRepos(ns.TO)
     else:
         repos = [repo]
@@ -138,14 +141,14 @@ async def main():
             try:
                 _labels = await c.getLabels(*repo)
             except Exception:
-                print(f"Failed to get labels of {repo[0]}/{repo[1]}")
+                report(repo[0], repo[1], "Failed to get labels.")
             else:
-                print(f"{repo[0]}/{repo[1]}: {_labels}")
+                report(*repo, f"{_labels}")
         if ns.clear:
             try:
                 await c.deleteLabels(*repo)
             except Exception as e:
-                print(f"Failed to delete labels of {repo[0]}/{repo[1]}.")
+                report(*repo, "Failed to delete labels.")
                 await c.close()
                 raise
         already_exist_flag = False
@@ -156,13 +159,12 @@ async def main():
             except ValidationFailed as e:
                 already_exist_flag = True
             except Exception as e:
-                print(f"Failed to create labels at {repo[0]}/{repo[1]}.")
+                report(*repo, "Failed to create labels.")
                 await c.close()
                 raise
         if already_exist_flag:
-            print(
-                f"[{repo[0]}/{repo[1]}] Failed some tries to create label.\n[{repo[0]}/{repo[1]}] Maybe there's already a label with the same name."
-            )
+            report(*repo, "Some tries failed to create labels.")
+            report(*repo, "Maybe already exist the label with the same name.")
     await c.close()
     exit(0)
 
